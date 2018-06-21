@@ -1,6 +1,6 @@
 {
   "name": "wavesoftware-glassfish",
-  "version": "1.0.0",
+  "version": "1.0.1-pre",
   "author": "Krzysztof Suszynski",
   "license": "GPL-3.0-or-later",
   "summary": "A plugin to manage Glassfish instalation and domains, system-properties, jdbc-connection-pools and jdbc-resources and application deployment.",
