@@ -21,6 +21,8 @@ class glassfish (
 
   include glassfish::internal::java
 
+  ensure_packages(['sudo'])
+
   $download_dir = '/opt/download'
   $download_file = "glassfish-${act_version}.zip"
   $dir           = "glassfish-${act_version}"
@@ -31,14 +33,14 @@ class glassfish (
   # Default Glassfish Asadmin path
   $asadmin_path  = "${gfpath}/bin/asadmin"
   # Default Glassfish download
-  $download_site = "http://download.java.net/glassfish/${act_version}/release"
+  $download_site = "http://jcenter.bintray.com/org/glassfish/main/distributions/glassfish/${act_version}"
 
   file { $download_dir: ensure => 'directory' }
-  file { "${download_dir}/${download_file}":  }
+  file { "${download_dir}/${download_file}": }
   file { $parent_dir:
     ensure => directory,
   }
-  file { "${download_dir}/${dir}":  }
+  file { "${download_dir}/${dir}": ensure => 'directory' }
   file { $gfpath:
     group => $glassfish::params::group,
     owner => $glassfish::params::user,
@@ -70,7 +72,7 @@ class glassfish (
   }
 
   exec { 'unzip-downloaded':
-    command => "unzip ${download_file}",
+    command => "unzip -o ${download_file}",
     path    => $::path,
     cwd     => $download_dir,
     creates => $gfpath,
@@ -84,12 +86,12 @@ class glassfish (
     user    => $glassfish::params::user,
     group   => $glassfish::params::group,
     require => Group[$glassfish::params::group],
-    dir     => "${download_dir}/glassfish*",
+    dir     => "${download_dir}/glassfish?",
     glpath  => $gfpath,
   }
 
   exec { 'move-downloaded':
-    command => "mv ${download_dir}/glassfish* ${gfpath}",
+    command => "mv ${download_dir}/glassfish? ${gfpath}",
     path    => $::path,
     cwd     => $download_dir,
     creates => $gfpath,
@@ -120,6 +122,7 @@ class glassfish (
     enable     => true,
     hasrestart => true,
     hasstatus  => true,
+    require    => Package['sudo'],
   }
 
   Glassfish::Internal::Download["${download_dir}/${download_file}"]

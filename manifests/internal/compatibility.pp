@@ -3,7 +3,7 @@
 class glassfish::internal::compatibility {
   include glassfish
 
-  $version_3x = '3.2'
+  $version_3x = '3.1.2.2'
   $version_4x = '4.1.2'
 
   case $glassfish::version {
