@@ -2,38 +2,29 @@
 #
 # Create a glassfish domain
 #
-#
-#
-class glassfish::domain ( 
-	$glassfish_domain 			= $glassfish::params::glassfish_domain,
-	$glassfish_user				= $glassfish::params::glassfish_user,
-	$glassfish_group			= $glassfish::params::glassfish_group,
-	$glassfish_asadmin_path		= $glassfish::params::glassfish_asadmin_path,	
-	$glassfish_asadmin_user		= $glassfish::params::glassfish_asadmin_user,
-	$glassfish_asadmin_passfile	= $glassfish::params::glassfish_asadmin_passfile,
-	$glassfish_portbase			= $glassfish::params::glassfish_portbase,
-	$glassfish_ensure			= present,
+class glassfish::domain (
+  $ensure           = present,
+  $domain           = $glassfish::params::domain,
+  $user             = $glassfish::params::user,
+  $group            = $glassfish::params::group,
+  $asadmin_path     = $glassfish::params::asadmin_path,
+  $asadmin_user     = $glassfish::params::asadmin_user,
+  $asadmin_passfile = $glassfish::params::asadmin_passfile,
+  $portbase         = $glassfish::params::portbase,
 ) inherits glassfish::params {
-	
-	# Check if domain name has been defined. 
-	if  $glassfish_domain == undef {
-		fail('Please specify a glassfish domain name now!')
-	}
 
-	# Notify user
-	notify {'gfdomain':
-	        message => "Creating Glassfish domain $glassfish_domain using portbase $glassfish_portbase"
-	}
+  # Check if domain name has been defined.
+  if  $domain == undef {
+    fail('Please specify a glassfish domain name now!')
+  }
 
-	# Create the domain
-	domain { $glassfish_domain:
-        user            => $glassfish_user,
-        asadminuser     => $glassfish_asadmin_user,
-        passwordfile    => $glassfish_asadmin_passfile,
-        ensure			=> $glassfish_ensure,
-        portbase		=> $glassfish_portbase,
-        asadminpath		=> $glassfish_asadmin_path,
-	}
-
-	
+  # Create the domain
+  domain { $domain:
+    ensure       => $ensure,
+    user         => $user,
+    passwordfile => $asadmin_passfile,
+    asadminuser  => $asadmin_user,
+    portbase     => $portbase,
+    asadminpath  => $asadmin_path,
+  }
 }
