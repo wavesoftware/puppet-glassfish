@@ -10,207 +10,129 @@
 #
 # Sample Usage:
 #
-
 class glassfish (
-  $java = $glassfish::params::glassfish_java, # JDK version: java-7-oracle, java-7-openjdk, java-6-oracle, java-6-openjdk
-  $version = $glassfish::params::glassfish_version, # '3.1.2.2'
-  $extrajars = [], # extra jars 
+  $version   = $glassfish::params::version,
+  $extrajars = [], # extra jars
 ) inherits glassfish::params {
-  include glassfish::download
+  include glassfish::internal::compatibility
 
-  $download_dir = '/opt/download' 
-  $download_file = "glassfish-$version.zip"
-  $glassfish_dir              = "glassfish-$version"
-  $glassfish_parent_dir       = '/usr/local/lib'
-  $glassfish_path             = "$glassfish_parent_dir/$glassfish_dir" # Default Glassfish path
-  $glassfish_asadmin_path     = "$glassfish_path/bin/asadmin" # Default Glassfish Asadmin path
-  $glassfish_download_site    = "http://download.java.net/glassfish/$version/release" # Default Glassfish download
+  # Actual installed version
+  $act_version   = $glassfish::internal::compatibility::version
 
-  file { $download_dir: ensure => "directory" }
-  file { "$download_dir/$download_file":  }
-  file { $glassfish_parent_dir:
+  include glassfish::internal::java
+
+  ensure_packages(['sudo'])
+
+  $download_dir = '/opt/download'
+  $download_file = "glassfish-${act_version}.zip"
+  $dir           = "glassfish-${act_version}"
+  $parent_dir    = '/usr/local/lib'
+
+  # Default Glassfish path
+  $gfpath        = "${parent_dir}/${dir}"
+  # Default Glassfish Asadmin path
+  $asadmin_path  = "${gfpath}/bin/asadmin"
+  # Default Glassfish download
+  $download_site = "http://jcenter.bintray.com/org/glassfish/main/distributions/glassfish/${act_version}"
+
+  file { $download_dir: ensure => 'directory' }
+  file { "${download_dir}/${download_file}": }
+  file { $parent_dir:
     ensure => directory,
   }
-  file { "$download_dir/$glassfish_dir":  }
-  file { $glassfish_path: 
-    group => $glassfish::params::glassfish_group,
-    owner => $glassfish::params::glassfish_user,
-    mode => 2775
+  file { "${download_dir}/${dir}": ensure => 'directory' }
+  file { $gfpath:
+    group => $glassfish::params::group,
+    owner => $glassfish::params::user,
+    mode  => '2775'
   }
 
-  user { $glassfish::params::glassfish_user:
-    ensure     => "present",
+  user { $glassfish::params::user:
+    ensure     => 'present',
     managehome => true
   }
-  
-  group { $glassfish::params::glassfish_group:
-    ensure    => "present",
-    require   => User[$glassfish::params::glassfish_user],
-    members   => User[$glassfish::params::glassfish_user],
+
+  group { $glassfish::params::group:
+    ensure  => 'present',
+    require => User[$glassfish::params::user],
+    members => User[$glassfish::params::user],
   }
 
-  glassfish::download::download { "$download_dir/$download_file":
-    uri => "$glassfish_download_site/$download_file",
+  glassfish::internal::download { "${download_dir}/${download_file}":
+    uri     => "${download_site}/${download_file}",
     require => [
-      File[$glassfish_path], 
-      File[$glassfish_parent_dir],
+      File[$gfpath],
+      File[$parent_dir],
       File[$download_dir],
     ]
   }
 
-  package { unzip:
-    ensure => "installed"
+  package { 'unzip':
+    ensure => 'installed'
   }
-  
-  exec {'unzip-downloaded':
-    command => "unzip $download_file",
-    path => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",                                                         
-    cwd => $download_dir,
-    creates => $glassfish_path,                                                              
+
+  exec { 'unzip-downloaded':
+    command => "unzip -o ${download_file}",
+    path    => $::path,
+    cwd     => $download_dir,
+    creates => $gfpath,
     require => [
-      File["$download_dir/$download_file"],
+      File["${download_dir}/${download_file}"],
       Package[unzip]
-    ]
+    ],
   }
-  
-  define setgroupaccess ($user, $group, $dir, $glpath) {
-      exec { "rwX $name":
-          command => "chmod -R g+rwX $dir",
-          path => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-          creates => $glpath,
-      }
-      exec { "find $name":
-          command => "find $dir -type d -exec chmod g+s {} +",
-          path => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-          creates => $glpath,
-      }
-      exec { "group $name":
-          command => "chown -R $user:$group $dir",
-          path => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-          creates => $glpath,
-      }
+
+  glassfish::internal::setgroupaccess { 'set-perm':
+    user    => $glassfish::params::user,
+    group   => $glassfish::params::group,
+    require => Group[$glassfish::params::group],
+    dir     => "${download_dir}/glassfish?",
+    glpath  => $gfpath,
   }
-  define install_jars ($glpath, $domain) {
-    $jaraddress = $name
-    $jar = basename($jaraddress)
-    $jardest = "$glpath/glassfish/domains/$domain/lib/$jar"
-	  exec { "download $name":
-      command => "wget -O $jardest $jaraddress",
-      path => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-      creates => $jardest,
-      cwd => $glpath,
-	    require => [
-	      File[$glpath], 
-	    ],
-	    notify => Service["glassfish"],
-	  }
-	}
-  
-  setgroupaccess {'set-perm':
-    user => $glassfish::params::glassfish_user,
-    group => $glassfish::params::glassfish_group,
-    require => Group[$glassfish::params::glassfish_group],
-    dir => "$download_dir/glassfish3",
-    glpath => $glassfish_path,                                                             
+
+  exec { 'move-downloaded':
+    command => "mv ${download_dir}/glassfish? ${gfpath}",
+    path    => $::path,
+    cwd     => $download_dir,
+    creates => $gfpath,
   }
-  
-  exec {'move-downloaded':
-    command => "mv $download_dir/glassfish3 $glassfish_path",
-    path => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",                                                         
-    cwd => $download_dir,
-    creates => $glassfish_path,                                                              
-  }
-  
-  install_jars { $extrajars:
-    domain => $glassfish::params::glassfish_domain,
-    glpath => $glassfish_path,
+
+  glassfish::internal::install_jars { $extrajars:
+    domain  => $glassfish::params::domain,
+    glpath  => $gfpath,
     require => Exec['move-downloaded'],
-    
   }
-  
-  file {servicefile:
-    path => "/etc/init.d/glassfish",
-    mode => 755,
+
+  file { 'glassfish-servicefile':
+    path    => '/etc/init.d/glassfish',
+    mode    => '0755',
     content => template('glassfish/glassfish-init.erb'),
-    notify  => Service["glassfish"]
-  } 
-  
-  file { asadminbin:
+    notify  => Service['glassfish']
+  }
+
+  file { 'asadminbin':
     content => template('glassfish/asadmin.erb'),
-    mode => 755,
-    path => '/usr/bin/asadmin',
-    notify  => Service["glassfish"]
+    mode    => '0755',
+    path    => '/usr/bin/asadmin',
+    notify  => Service['glassfish']
   }
-	
-	case $java {
-    'java-7-oracle'  : {
-      require java7
-      service { "glassfish":
-		    ensure     => running,
-		    enable     => true,
-		    hasstatus  => true,
-		    hasrestart => true,
-		    require => [
-		      File[$glassfish_path],
-		      File[servicefile],
-		      Class[java7],
-		    ]
-		  }
-    }
-    'java-7-openjdk' : {
-      package { 'openjdk-7-jdk': ensure => "installed" }
-      service { "glassfish":
-        ensure     => running,
-        enable     => true,
-        hasstatus  => true,
-        hasrestart => true,
-        require => [
-          File[$glassfish_path],
-          File[servicefile],
-          Package['openjdk-7-jdk'],
-        ]
-      }
-    }
-    'java-6-oracle'  : {
-      package { 'sun-java6-jdk': ensure => "installed" }
-      service { "glassfish":
-        ensure     => running,
-        enable     => true,
-        hasstatus  => true,
-        hasrestart => true,
-        require => [
-          File[$glassfish_path],
-          File[servicefile],
-          Package['sun-java6-jdk'],
-        ]
-      }
-    }
-    'java-6-openjdk' : {
-      package { 'openjdk-6-jdk': ensure => "installed" }
-      service { "glassfish":
-        ensure     => running,
-        enable     => true,
-        hasstatus  => true,
-        hasrestart => true,
-        require => [
-          File[$glassfish_path],
-          File[servicefile],
-          Package['openjdk-6-jdk'],
-        ]
-      }
-    }
-    default          : {
-      fail("Unrecognized Java version. Choose one of: java-7-oracle, java-7-openjdk, java-6-oracle, java-6-openjdk")
-    }
+
+  service { 'glassfish':
+    ensure     => running,
+    enable     => true,
+    hasrestart => true,
+    hasstatus  => true,
+    require    => Package['sudo'],
   }
-  
-  Glassfish::Download::Download["$download_dir/$download_file"] 
-  -> Exec['unzip-downloaded'] 
-  -> Setgroupaccess['set-perm'] 
-  -> Exec['move-downloaded'] 
-  -> File [servicefile]
-  -> File [asadminbin]
-  
-  File [servicefile] -> Service['glassfish']
+
+  Glassfish::Internal::Download["${download_dir}/${download_file}"]
+    -> Exec['unzip-downloaded']
+    -> Glassfish::Internal::Setgroupaccess['set-perm']
+    -> Exec['move-downloaded']
+    -> File['glassfish-servicefile']
+    -> File['asadminbin']
+
+  File['glassfish-servicefile'] -> Service['glassfish']
+  Class['java'] -> Service['glassfish']
 
 }

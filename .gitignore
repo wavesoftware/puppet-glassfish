@@ -1,2 +1,10 @@
-/.project
-/pkg/*
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+pkg/
+.vagrant/
+.tmp
+coverage
+spec/fixtures
+log/
+junit/
+.bundle

@@ -1,21 +1,18 @@
 # Include default params
 require glassfish::params
 
-class { glassfish:
-  java => 'java-7-openjdk', # optional, can be one of: java-7-oracle, java-7-openjdk, java-6-oracle, java-6-openjdk
-  version => '3.1.2.2',     # glassfish version
+class { 'glassfish':
+  version   => '3.1.2.2',     # glassfish version
   extrajars => [            # extra jars to install
-    "http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar",
+    'https://jdbc.postgresql.org/download/postgresql-42.2.2.jre7.jar',
   ],
 }
 
-Domain {
-  user         => 'gfish',
-  asadminuser  => 'admin',
-  passwordfile => '/home/gfish/.aspass',
-}
-
 domain {
+  default:
+    user         => 'gfish',
+    asadminuser  => 'admin',
+    passwordfile => '/home/gfish/.aspass';
   'mydomain':
     ensure => present;
 
@@ -52,13 +49,13 @@ Jdbcconnectionpool {
 
 jdbcconnectionpool {'MyPool':
   properties => {
-    'password' => 'mYPasS',
-    'user' => 'myuser',
-    'url' => 'jdbc:mysql://host.ex.com:3306/mydatabase',
-    'useUnicode' => true,
-    'characterEncoding' => 'utf8',
-    'characterResultSets' => 'utf',
-    'autoReconnect' => true,
+    'password'              => 'mYPasS',
+    'user'                  => 'myuser',
+    'url'                   => 'jdbc:mysql://host.ex.com:3306/mydatabase',
+    'useUnicode'            => true,
+    'characterEncoding'     => 'utf8',
+    'characterResultSets'   => 'utf',
+    'autoReconnect'         => true,
     'autoReconnectForPools' => true,
   }
 }
@@ -81,18 +78,17 @@ Customresource {
 
 customresource { 'custom/SampleProperties':
   properties => {
-    "type" => 'local',
-    "path" => '/tmp/published',
+    'type' => 'local',
+    'path' => '/tmp/published',
   }
 }
 
-Application {
-  ensure       => present,
-  user         => 'gfish',
-  passwordfile => '/home/gfish/.aspass',
-}
+deploy {
+  default:
+    ensure       => present,
+    user         => 'gfish',
+    passwordfile => '/home/gfish/.aspass';
 
-application {
   'pluto':
     source => '/home/gfish/pluto.war';
 
