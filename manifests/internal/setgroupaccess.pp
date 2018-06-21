@@ -3,7 +3,7 @@ define glassfish::internal::setgroupaccess (
   $user,
   $group,
   $dir,
-  $glpath
+  $glpath,
   ) {
   assert_private('Private')
 

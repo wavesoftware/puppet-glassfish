@@ -80,11 +80,11 @@ class glassfish (
     ],
   }
 
-  glassfish::internal::setgroupaccess {'set-perm':
+  glassfish::internal::setgroupaccess { 'set-perm':
     user    => $glassfish::params::user,
     group   => $glassfish::params::group,
     require => Group[$glassfish::params::group],
-    dir     => "${download_dir}/glassfish3",
+    dir     => "${download_dir}/glassfish*",
     glpath  => $gfpath,
   }
 
