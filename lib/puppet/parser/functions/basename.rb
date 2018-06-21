@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # basename(string) : string
 # basename(string[]) : string[]
 #
@@ -5,9 +7,9 @@
 # formed using forward slashes (``/..) regardless of the separator used on the
 # local file system.
 module Puppet::Parser::Functions
-  newfunction(:basename, :type => :rvalue) do |args|
+  newfunction(:basename, type: :rvalue) do |args|
     if args[0].is_a?(Array)
-      args.collect do |a| File.basename(a) end
+      args.collect { |a| File.basename(a) }
     else
       File.basename(args[0])
     end
