@@ -23,25 +23,5 @@ matrix:
       env: CHECK=metadata_lint
     -
       env: CHECK=release_checks
-    -
-      sudo: required
-      services: docker
-      env: RS_SET="centos-6-docker"
-      script: bundle exec rake beaker
-    -
-      sudo: required
-      services: docker
-      env: RS_SET="centos-7-docker"
-      script: bundle exec rake beaker
-    -
-      sudo: required
-      services: docker
-      env: RS_SET="ubuntu-1404-docker"
-      script: bundle exec rake beaker
-    -
-      sudo: required
-      services: docker
-      env: RS_SET="ubuntu-1604-docker"
-      script: bundle exec rake beaker
 notifications:
   email: false
