@@ -10,7 +10,7 @@ references:
     run:
       name: Install RVM
       command: |
-        gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+        gpg --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
         \curl -sSL https://get.rvm.io | bash -s stable
   intall-ruby: &intall-ruby
     run:
@@ -68,23 +68,23 @@ jobs:
     <<: *environment-defaults
     <<: *steps
     environment:
-      RUBY_VERSION: '2.1'
+      RUBY_VERSION: '2.4'
       RS_SET: centos-6-docker
   centos-7:
     <<: *environment-defaults
     <<: *steps
     environment:
-      RUBY_VERSION: '2.1'
+      RUBY_VERSION: '2.4'
       RS_SET: centos-7-docker
   ubuntu-1404:
     <<: *environment-defaults
     <<: *steps
     environment:
-      RUBY_VERSION: '2.1'
+      RUBY_VERSION: '2.4'
       RS_SET: ubuntu-1404-docker
   ubuntu-1604:
     <<: *environment-defaults
     <<: *steps
     environment:
-      RUBY_VERSION: '2.1'
+      RUBY_VERSION: '2.4'
       RS_SET: ubuntu-1604-docker
